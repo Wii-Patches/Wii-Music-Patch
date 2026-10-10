@@ -92,27 +92,27 @@ jobs:
         run: |
           BINS=""
           for f in wit_bin/*; do BINS="$BINS --add-binary $f:."; done
-          pyinstaller --name WiiMusic-Patcher --windowed --noconfirm \
+          pyinstaller --name Wii-Music-Patcher --windowed --noconfirm \
             --collect-all tkinterdnd2 \
             --paths tools --add-data tools/prebuilt:prebuilt --add-data assets/logo.png:assets \
             --icon assets/icon.icns --target-architecture universal2 \
             $BINS --distpath pyinst_dist tools/gui.py
-          cp wit-gpl-2.0.txt "pyinst_dist/WiiMusic-Patcher.app/Contents/Resources/wit-gpl-2.0.txt"
+          cp wit-gpl-2.0.txt "pyinst_dist/Wii-Music-Patcher.app/Contents/Resources/wit-gpl-2.0.txt"
           cd pyinst_dist
-          zip -qr "../WiiMusic-Patch-${{ matrix.target }}.zip" WiiMusic-Patcher.app
+          zip -qr "../Wii-Music-Patch-${{ matrix.target }}.zip" Wii-Music-Patcher.app
 
       - name: Build app (Linux)
         if: matrix.target == 'linux-x86_64'
         run: |
           BINS=""
           for f in wit_bin/*; do BINS="$BINS --add-binary $f:."; done
-          pyinstaller --name WiiMusic-Patcher --windowed --noconfirm \
+          pyinstaller --name Wii-Music-Patcher --windowed --noconfirm \
             --collect-all tkinterdnd2 \
             --paths tools --add-data tools/prebuilt:prebuilt --add-data assets/logo.png:assets \
             $BINS --distpath pyinst_dist tools/gui.py
-          cp wit-gpl-2.0.txt pyinst_dist/WiiMusic-Patcher/
+          cp wit-gpl-2.0.txt pyinst_dist/Wii-Music-Patcher/
           cd pyinst_dist
-          tar -czf "../WiiMusic-Patch-${{ matrix.target }}.tar.gz" WiiMusic-Patcher
+          tar -czf "../Wii-Music-Patch-${{ matrix.target }}.tar.gz" Wii-Music-Patcher
 
       - name: Build app (Windows)
         if: matrix.target == 'windows-x86_64'
@@ -120,23 +120,23 @@ jobs:
         run: |
           BINS=""
           for f in wit_bin/*; do BINS="$BINS --add-binary $f;."; done
-          pyinstaller --name WiiMusic-Patcher --windowed --noconfirm \
+          pyinstaller --name Wii-Music-Patcher --windowed --noconfirm \
             --collect-all tkinterdnd2 \
             --paths tools --add-data "tools/prebuilt;prebuilt" --add-data "assets/logo.png;assets" \
             --icon assets/icon.ico \
             $BINS --distpath pyinst_dist tools/gui.py
-          cp wit-gpl-2.0.txt pyinst_dist/WiiMusic-Patcher/
+          cp wit-gpl-2.0.txt pyinst_dist/Wii-Music-Patcher/
           cd pyinst_dist
-          7z a "../WiiMusic-Patch-${{ matrix.target }}.zip" WiiMusic-Patcher \
-            || powershell -Command "Compress-Archive -Path WiiMusic-Patcher -DestinationPath ../WiiMusic-Patch-${{ matrix.target }}.zip"
+          7z a "../Wii-Music-Patch-${{ matrix.target }}.zip" Wii-Music-Patcher \
+            || powershell -Command "Compress-Archive -Path Wii-Music-Patcher -DestinationPath ../Wii-Music-Patch-${{ matrix.target }}.zip"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WiiMusic-Patch-${{ matrix.target }}
-          path: WiiMusic-Patch-${{ matrix.target }}.*
+          name: Wii-Music-Patch-${{ matrix.target }}
+          path: Wii-Music-Patch-${{ matrix.target }}.*
 
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: WiiMusic-Patch-${{ matrix.target }}.*
+          files: Wii-Music-Patch-${{ matrix.target }}.*

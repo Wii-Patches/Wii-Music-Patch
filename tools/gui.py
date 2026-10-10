@@ -35,7 +35,7 @@ BASE = TkinterDnD.Tk if HAVE_DND else tk.Tk
 class App(BASE):
     def __init__(self):
         super().__init__()
-        self.title('Wii Music Patcher')
+        self.title('Wii-Music-Patcher')
         self.geometry('620x600')
         self.msgq = queue.Queue()
         self.busy = False

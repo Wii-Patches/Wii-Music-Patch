@@ -51,7 +51,7 @@ def run_patch(image_path, log, done, flags=3):
             raise RuntimeError('nothing selected: tick at least one controller type')
         fmt = '--iso' if image_path.lower().endswith('.iso') else '--wbfs'
 
-        with tempfile.TemporaryDirectory(prefix='wiimusic_patch_') as tmp:
+        with tempfile.TemporaryDirectory(prefix='wii_music_patch_') as tmp:
             fst = os.path.join(tmp, 'fst')
             log('extracting %s...' % os.path.basename(image_path))
             r = subprocess.run([wit, 'extract', image_path, '--dest', fst, '--psel', 'data',

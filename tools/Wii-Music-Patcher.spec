@@ -29,7 +29,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='WiiMusic-Patcher',
+    name='Wii-Music-Patcher',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -48,11 +48,11 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='WiiMusic-Patcher',
+    name='Wii-Music-Patcher',
 )
 app = BUNDLE(
     coll,
-    name='WiiMusic-Patcher.app',
+    name='Wii-Music-Patcher.app',
     icon=ICON,
-    bundle_identifier='net.quatric.wiimusic-patcher',
+    bundle_identifier='net.quatric.wii-music-patcher',
 )
