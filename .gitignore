@@ -29,3 +29,4 @@ lab/t_audio.py
 lab/probe_pc.py
 lab/rd_test.py
 lab/boot_base.py
+.codesight/
