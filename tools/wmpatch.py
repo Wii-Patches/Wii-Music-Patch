@@ -57,6 +57,23 @@ def feature(region, dol, flags=3):
     return Feature('pads', 'GameCube / Classic Controller', region.disc_id, ops)
 
 
+OLD_HOST, NEW_HOST = b'https://wus.wapp.wii.com', b'http://wus.wii.rc24.xyz'
+
+
+def redirect_update_server(dol):
+    """Point the game's Wii Shop update server URLs at RiiConnect24 (strings are padded in place)."""
+    data, n, pos = dol.data, 0, 0
+    while True:
+        i = data.find(OLD_HOST, pos)
+        if i < 0:
+            return n
+        end = data.index(b'\0', i)
+        new = data[i:end].replace(OLD_HOST, NEW_HOST)
+        assert len(new) <= end - i
+        data[i:end] = new + bytes(end - i - len(new))
+        pos, n = end, n + 1
+
+
 def detect_region(dol, disc_id=None):
     for r in ([REGIONS[disc_id]] if disc_id else REGIONS.values()):
         try:
@@ -71,6 +88,7 @@ def patch_dol(src, dst, disc_id=None, flags=3):
     dol = Dol(src)
     region = detect_region(dol, disc_id)
     size = apply_static(dol, [feature(region, dol, flags)])
+    redirect_update_server(dol)
     dol.save(dst)
     return region, size
 

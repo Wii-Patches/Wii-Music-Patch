@@ -12,13 +12,16 @@ or a Classic Controller instead of a Wii Remote + Nunchuk.
 | 1 | X |
 | 2 | Y |
 | L / R | swing (left / right hand) |
-| HOME | Z or Start (GameCube) |
+| HOME | Z (GameCube) |
+| + (pause) | Start (GameCube) |
 | − / + | left stick left / right (GameCube); − / + (Classic) |
 | D-pad | D-pad |
 | Nunchuk stick | left stick |
 | IR pointer | right stick (C-stick) |
 
 DK Bongos are not supported.
+
+The patcher also points the game's Wii Shop update-server URLs (`wus.wapp.wii.com`) at RiiConnect24 (`wus.wii.rc24.xyz`).
 
 ## Use
 

@@ -10,8 +10,9 @@
  *   A, B, X, Y      Wii Remote A, B, 1, 2
  *   L / ZL          shake the Nunchuk hand (the left hand)
  *   R / ZR          shake the Wii Remote hand (the right hand)
- *   Z, Start (GC)   HOME Menu       Home (Classic)   HOME Menu
- *   + / - (Classic) + and -         GC control stick left / right   - / + (switch instruments)
+ *   Z (GameCube)    HOME Menu       Home (Classic)   HOME Menu
+ *   Start (GC)      + (pause)       + / - (Classic)  + and -
+ *   GC stick left / right   - / + (switch instruments)
  *   D-pad           D-pad
  *   control stick   Nunchuk stick   C stick / right stick   IR pointer
  *
@@ -193,7 +194,7 @@ static u32 gc_buttons(u32 h)
     if (h & 0x02000000u) b |= WM_B;
     if (h & 0x04000000u) b |= WM_ONE;       /* X */
     if (h & 0x08000000u) b |= WM_TWO;       /* Y */
-    if (h & 0x10000000u) b |= WM_HOME;      /* Start */
+    if (h & 0x10000000u) b |= WM_PLUS;      /* Start (pause) */
     if (h & 0x00100000u) b |= WM_HOME;      /* Z */
     if (h & 0x00080000u) b |= WM_UP;
     if (h & 0x00040000u) b |= WM_DOWN;
