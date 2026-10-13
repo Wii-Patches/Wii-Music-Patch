@@ -12,7 +12,8 @@ or a Classic Controller instead of a Wii Remote + Nunchuk.
 | 1 | X |
 | 2 | Y |
 | L / R | swing (left / right hand) |
-| HOME | Z (GameCube) |
+| HOME | Z or Start (GameCube) |
+| − / + | left stick left / right (GameCube); − / + (Classic) |
 | D-pad | D-pad |
 | Nunchuk stick | left stick |
 | IR pointer | right stick (C-stick) |

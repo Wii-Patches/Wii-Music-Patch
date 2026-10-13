@@ -10,8 +10,9 @@
  *   A, B, X, Y      Wii Remote A, B, 1, 2
  *   L / ZL          shake the Nunchuk hand (the left hand)
  *   R / ZR          shake the Wii Remote hand (the right hand)
- *   Z (GameCube)    HOME Menu       Home (Classic)   HOME Menu
- *   Start / +, -    + and -         D-pad            D-pad
+ *   Z, Start (GC)   HOME Menu       Home (Classic)   HOME Menu
+ *   + / - (Classic) + and -         GC control stick left / right   - / + (switch instruments)
+ *   D-pad           D-pad
  *   control stick   Nunchuk stick   C stick / right stick   IR pointer
  *
  * The game never links PAD, so nothing polls the pads: gc_poll() drives the Serial
@@ -56,6 +57,7 @@ struct ch {
     float last[2][3];       /* last acceleration written for each hand */
     u32 norep;
     u32 last_h, last_l;
+    float last_mag[2];
 };
 struct gl {
     u32 probe_tb, poll_tb, busy_tb, rr;
@@ -191,7 +193,7 @@ static u32 gc_buttons(u32 h)
     if (h & 0x02000000u) b |= WM_B;
     if (h & 0x04000000u) b |= WM_ONE;       /* X */
     if (h & 0x08000000u) b |= WM_TWO;       /* Y */
-    if (h & 0x10000000u) b |= WM_PLUS;      /* Start */
+    if (h & 0x10000000u) b |= WM_HOME;      /* Start */
     if (h & 0x00100000u) b |= WM_HOME;      /* Z */
     if (h & 0x00080000u) b |= WM_UP;
     if (h & 0x00040000u) b |= WM_DOWN;
@@ -216,6 +218,24 @@ static u32 cc_buttons(u32 c)
     if (c & 0x8000) b |= WM_RIGHT;
     if (c & 0x0002) b |= WM_LEFT;
     return b;
+}
+
+/* control stick left / right -> - / + (instrument switching) */
+static u32 gc_stick_buttons(u32 h)
+{
+    s32 x = (s32)((h >> 8) & 0xFF) - 128;
+    if (x <= -48) return WM_MINUS;
+    if (x >= 48) return WM_PLUS;
+    return 0;
+}
+
+static float sqrt_(float x)
+{
+    float r, i;
+    if (x <= 0.0f) return 0.0f;
+    r = x > 1.0f ? x * 0.5f : 1.0f;
+    for (i = 0; i < 8; i++) r = 0.5f * (r + x / r);
+    return r;
 }
 
 static s32 stick_pct(u32 byte)              /* GameCube stick byte -> -100..100 */
@@ -276,10 +296,15 @@ static void drive(u32 chan, struct kstat *buf, u32 n, u32 src, u32 hold, s32 lx,
             k->acc[j] = rest[1][j] + (cur[1][j] - rest[1][j]) * t;
             k->nacc[j] = rest[0][j] + (cur[0][j] - rest[0][j]) * t;
         }
-        mag = k->acc[0] * k->acc[0] + k->acc[1] * k->acc[1] + k->acc[2] * k->acc[2];
+        /* KPAD reports the magnitude and how fast it is changing (the game's gesture code reads both) */
+        mag = sqrt_(k->acc[0] * k->acc[0] + k->acc[1] * k->acc[1] + k->acc[2] * k->acc[2]);
         k->acc_value = mag;
-        mag = k->nacc[0] * k->nacc[0] + k->nacc[1] * k->nacc[1] + k->nacc[2] * k->nacc[2];
+        k->acc_speed = fabs_(mag - s->last_mag[1]) * 0.5f;
+        if (i == 0) s->last_mag[1] = mag;
+        mag = sqrt_(k->nacc[0] * k->nacc[0] + k->nacc[1] * k->nacc[1] + k->nacc[2] * k->nacc[2]);
         k->nacc_value = mag;
+        k->nacc_speed = fabs_(mag - s->last_mag[0]) * 0.5f;
+        if (i == 0) s->last_mag[0] = mag;
         k->pos[0] = px;
         k->pos[1] = py;
         k->dev_type = 1;                    /* Nunchuk */
@@ -290,7 +315,6 @@ static void drive(u32 chan, struct kstat *buf, u32 n, u32 src, u32 hold, s32 lx,
     }
     s->src = src;
     s->frames++;
-    (void)fabs_;
 }
 
 /* the wrapper for every `bl KPADRead` */
@@ -308,7 +332,7 @@ s32 hook_kpad(u32 chan, void *buf, u32 n)
     if (s->magic != MAGIC) {
         u32 *p = (u32 *)s, i;
         for (i = 0; i < 0x18; i++) p[i] = 0;
-        s->last[0][2] = s->last[1][2] = 1.0f;       /* both hands start at rest */
+        s->last[0][2] = s->last[1][2] = s->last_mag[0] = s->last_mag[1] = 1.0f;       /* both hands start at rest */
         s->magic = MAGIC;
     }
     if (!cnt)
@@ -317,7 +341,7 @@ s32 hook_kpad(u32 chan, void *buf, u32 n)
     if ((R32(CFG) & 1) && gc_in(chan, &h, &l)) {
         s->last_h = h;
         s->last_l = l;
-        drive(chan, k, cnt, 1, gc_buttons(h), stick_pct(h >> 8), stick_pct(h), stick_pct(l >> 24), stick_pct(l >> 16),
+        drive(chan, k, cnt, 1, gc_buttons(h) | gc_stick_buttons(h), stick_pct(h >> 8), stick_pct(h), stick_pct(l >> 24), stick_pct(l >> 16),
               (h & 0x00400000u) != 0, (h & 0x00200000u) != 0, 0);
         return cnt;
     }
@@ -333,12 +357,15 @@ s32 hook_kpad(u32 chan, void *buf, u32 n)
     s->src = 0;
     s->swing[0] = s->swing[1] = 0;
 #ifdef LOGACC
-    /* debug build: record the real controller's acceleration, 6 floats per frame, in a ring at STATE+0x200 */
+    /* debug build: record the real controller's acceleration (acc, acc_value, acc_speed; same for the Nunchuk),
+     * 10 floats per frame, in a ring of 24 at STATE+0x200 */
     if (chan == 0 && r > 0) {
         volatile u32 *idx = (volatile u32 *)(STATE + 0x1FC);
         volatile float *ring = (volatile float *)(STATE + 0x200);
-        u32 i = *idx & 15, j;
-        for (j = 0; j < 3; j++) { ring[i * 6 + j] = k->acc[j]; ring[i * 6 + 3 + j] = k->nacc[j]; }
+        u32 i = *idx % 24, j;
+        for (j = 0; j < 3; j++) { ring[i * 10 + j] = k->acc[j]; ring[i * 10 + 5 + j] = k->nacc[j]; }
+        ring[i * 10 + 3] = k->acc_value; ring[i * 10 + 4] = k->acc_speed;
+        ring[i * 10 + 8] = k->nacc_value; ring[i * 10 + 9] = k->nacc_speed;
         *idx = *idx + 1;
     }
 #endif
