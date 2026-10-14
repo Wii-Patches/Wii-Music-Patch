@@ -12,7 +12,7 @@
  *   R / ZR          shake the Wii Remote hand (the right hand)
  *   Z (GameCube)    HOME Menu       Home (Classic)   HOME Menu
  *   Start (GC)      + (pause)       + / - (Classic)  + and -
- *   GC stick left / right   - / + (switch instruments)
+ *   GC L / R        light press shakes the hand, full click is - / +
  *   D-pad           D-pad
  *   control stick   Nunchuk stick   C stick / right stick   IR pointer
  *
@@ -65,6 +65,7 @@ struct gl {
 };
 #define CH(c) ((volatile struct ch *)(STATE + 0x60 * (c)))
 #define GL ((volatile struct gl *)(STATE + 0x180))
+#define SHOULDER_SWING 40    /* analog trigger value that counts as a light press */
 #define MAGIC 0x574D5031u   /* 'WMP1' */
 
 static inline u32 tb(void)
@@ -221,13 +222,13 @@ static u32 cc_buttons(u32 c)
     return b;
 }
 
-/* control stick left / right -> - / + (instrument switching) */
-static u32 gc_stick_buttons(u32 h)
+/* a full click of the GameCube L / R triggers -> - / + (instrument switching) */
+static u32 gc_shoulder_buttons(u32 h)
 {
-    s32 x = (s32)((h >> 8) & 0xFF) - 128;
-    if (x <= -48) return WM_MINUS;
-    if (x >= 48) return WM_PLUS;
-    return 0;
+    u32 b = 0;
+    if (h & 0x00400000u) b |= WM_MINUS;
+    if (h & 0x00200000u) b |= WM_PLUS;
+    return b;
 }
 
 static float sqrt_(float x)
@@ -342,8 +343,9 @@ s32 hook_kpad(u32 chan, void *buf, u32 n)
     if ((R32(CFG) & 1) && gc_in(chan, &h, &l)) {
         s->last_h = h;
         s->last_l = l;
-        drive(chan, k, cnt, 1, gc_buttons(h) | gc_stick_buttons(h), stick_pct(h >> 8), stick_pct(h), stick_pct(l >> 24), stick_pct(l >> 16),
-              (h & 0x00400000u) != 0, (h & 0x00200000u) != 0, 0);
+        drive(chan, k, cnt, 1, gc_buttons(h) | gc_shoulder_buttons(h), stick_pct(h >> 8), stick_pct(h), stick_pct(l >> 24), stick_pct(l >> 16),
+              ((l >> 8) & 0xFF) >= SHOULDER_SWING && !(h & 0x00400000u),
+              (l & 0xFF) >= SHOULDER_SWING && !(h & 0x00200000u), 0);
         return cnt;
     }
     if ((R32(CFG) & 2) && r > 0 && k->dev_type == 2) {
