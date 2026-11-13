@@ -99,7 +99,7 @@ jobs:
             $BINS --distpath pyinst_dist tools/gui.py
           cp wit-gpl-2.0.txt "pyinst_dist/Wii-Music-Patcher.app/Contents/Resources/wit-gpl-2.0.txt"
           cd pyinst_dist
-          zip -qr "../Wii-Music-Patch-${{ matrix.target }}.zip" Wii-Music-Patcher.app
+          zip -qr "../Wii-Music-ISO-Patcher-${{ matrix.target }}.zip" Wii-Music-Patcher.app
 
       - name: Build app (Linux)
         if: matrix.target == 'linux-x86_64'
@@ -112,7 +112,7 @@ jobs:
             $BINS --distpath pyinst_dist tools/gui.py
           cp wit-gpl-2.0.txt pyinst_dist/Wii-Music-Patcher/
           cd pyinst_dist
-          tar -czf "../Wii-Music-Patch-${{ matrix.target }}.tar.gz" Wii-Music-Patcher
+          tar -czf "../Wii-Music-ISO-Patcher-${{ matrix.target }}.tar.gz" Wii-Music-Patcher
 
       - name: Build app (Windows)
         if: matrix.target == 'windows-x86_64'
@@ -127,16 +127,16 @@ jobs:
             $BINS --distpath pyinst_dist tools/gui.py
           cp wit-gpl-2.0.txt pyinst_dist/Wii-Music-Patcher/
           cd pyinst_dist
-          7z a "../Wii-Music-Patch-${{ matrix.target }}.zip" Wii-Music-Patcher \
-            || powershell -Command "Compress-Archive -Path Wii-Music-Patcher -DestinationPath ../Wii-Music-Patch-${{ matrix.target }}.zip"
+          7z a "../Wii-Music-ISO-Patcher-${{ matrix.target }}.zip" Wii-Music-Patcher \
+            || powershell -Command "Compress-Archive -Path Wii-Music-Patcher -DestinationPath ../Wii-Music-ISO-Patcher-${{ matrix.target }}.zip"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Wii-Music-Patch-${{ matrix.target }}
-          path: Wii-Music-Patch-${{ matrix.target }}.*
+          name: Wii-Music-ISO-Patcher-${{ matrix.target }}
+          path: Wii-Music-ISO-Patcher-${{ matrix.target }}.*
 
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: Wii-Music-Patch-${{ matrix.target }}.*
+          files: Wii-Music-ISO-Patcher-${{ matrix.target }}.*
